@@ -1,0 +1,34 @@
+[project]
+name = "plc-trigger-cam"
+version = "0.1.0"
+description = "PLC trigger camera tool — captures USB camera images on PLC bit rising edge"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pymcprotocol>=0.3.0",
+    "opencv-python>=4.8.0",
+    "Pillow>=10.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.0",
+    "ty>=0.0.1a2",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "camera", "plc_monitor", "settings_dialog"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty.environment]
+python-version = "3.11"
