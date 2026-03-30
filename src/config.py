@@ -83,6 +83,7 @@ class AppConfig:
 
 
 def _plc_from_dict(d: dict) -> PlcConfig:  # type: ignore[type-arg]
+    d = d.copy()
     devices = [DeviceConfig(**dev) for dev in d.pop("devices", [])]
     return PlcConfig(**d, devices=devices)
 

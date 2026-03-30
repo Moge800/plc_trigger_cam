@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -326,9 +327,19 @@ class SettingsDialog(tk.Toplevel):
 
     def _on_ok(self) -> None:
         try:
+            ip_str = self._plc_ip.get().strip()
+            try:
+                ipaddress.ip_address(ip_str)
+            except ValueError:
+                raise ValueError(f"Invalid IP address: {ip_str!r}") from None
+
+            port_val = int(self._plc_port.get())
+            if not (1 <= port_val <= 65535):
+                raise ValueError(f"Port must be 1\u201365535 (got {port_val})")
+
             plc = PlcConfig(
-                ip=self._plc_ip.get().strip(),
-                port=int(self._plc_port.get()),
+                ip=ip_str,
+                port=port_val,
                 plc_type=self._plc_type.get(),
                 protocol=self._plc_protocol.get(),
                 poll_interval_ms=int(self._plc_poll.get()),

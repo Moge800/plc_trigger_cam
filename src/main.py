@@ -12,6 +12,7 @@ from queue import Queue
 from tkinter import messagebox, scrolledtext, ttk
 from typing import TYPE_CHECKING, Any
 
+import cv2
 from PIL import Image, ImageTk
 
 from camera import CameraThread
@@ -255,8 +256,6 @@ class App(tk.Tk):
         frame = self._camera.get_preview_frame()
         if frame is None:
             return
-        import cv2
-
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(rgb)
 
@@ -277,6 +276,7 @@ class App(tk.Tk):
     def _toggle_plc_connection(self) -> None:
         if self._plc_monitor and self._plc_monitor.is_alive():
             self._plc_monitor.stop()
+            self._plc_monitor.join(timeout=2.0)
             self._plc_monitor = None
             self._btn_connect.config(text="Connect PLC")
             self._plc_light.set_color("gray")
@@ -310,6 +310,7 @@ class App(tk.Tk):
         # Restart monitor with new mode if running
         if self._plc_monitor and self._plc_monitor.is_alive():
             self._plc_monitor.stop()
+            self._plc_monitor.join(timeout=2.0)
             self._start_plc_monitor()
 
     def _sim_fire_trigger(self) -> None:

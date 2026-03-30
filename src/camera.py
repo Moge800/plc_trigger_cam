@@ -68,18 +68,19 @@ class CameraThread(threading.Thread):
 
         Returns ``None`` if no frame is available yet.
         """
-        with self._capture_lock, self._frame_lock:
-            frame = None if self._frame is None else self._frame.copy()
+        with self._capture_lock:
+            with self._frame_lock:
+                frame = None if self._frame is None else self._frame.copy()
 
-        if frame is None:
-            return None
+            if frame is None:
+                return None
 
-        save_path = self._build_save_path(device_label)
-        save_path.parent.mkdir(parents=True, exist_ok=True)
+            save_path = self._build_save_path(device_label)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
 
-        params = [cv2.IMWRITE_PNG_COMPRESSION, self._save_cfg.png_compression]
-        cv2.imwrite(str(save_path), frame, params)
-        return save_path
+            params = [cv2.IMWRITE_PNG_COMPRESSION, self._save_cfg.png_compression]
+            cv2.imwrite(str(save_path), frame, params)
+            return save_path
 
     # ------------------------------------------------------------------
     # Thread entry point
@@ -122,12 +123,15 @@ class CameraThread(threading.Thread):
             c if c.isalnum() or c in "-_" else "_" for c in device_label
         )
 
-        filename = (
-            now.strftime(self._save_cfg.filename_format).format(
-                ms=ms, device=safe_label
+        try:
+            filename = (
+                now.strftime(self._save_cfg.filename_format).format(
+                    ms=ms, device=safe_label
+                )
+                + ".png"
             )
-            + ".png"
-        )
+        except (ValueError, KeyError):
+            filename = now.strftime("%Y%m%d_%H%M%S") + f"_{ms:03d}_{safe_label}.png"
 
         base = Path(self._save_cfg.save_path)
         if self._save_cfg.daily_folder:
