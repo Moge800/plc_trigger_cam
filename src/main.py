@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import queue
 import sys
 import tkinter as tk
+import types
 from datetime import datetime
 from pathlib import Path
 from queue import Queue
@@ -19,6 +21,10 @@ from camera import CameraThread
 from config import load_config, save_config
 from plc_monitor import BitStateEvent, PlcMonitor, PlcStatus, StatusEvent, TriggerEvent
 from settings_dialog import SettingsDialog
+
+_beep: types.ModuleType | None = None
+with contextlib.suppress(ModuleNotFoundError):
+    import beep_lite as _beep  # オプション依存: pip install beep-lite
 
 if TYPE_CHECKING:
     pass
@@ -367,8 +373,12 @@ class App(tk.Tk):
         if path:
             self._log_capture(path, device_label)
             self._last_capture_label.config(text=str(path))
+            if _beep:
+                _beep.ok()
         else:
             self._set_status("Capture failed: no frame available.")
+            if _beep:
+                _beep.ng()
 
     def _log_capture(self, path: Path, device_label: str) -> None:
         """キャプチャリストにパスとタイムスタンプを追記する。
