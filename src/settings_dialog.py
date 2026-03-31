@@ -1,4 +1,4 @@
-"""Settings dialog — tabbed configuration UI for PLC Trigger Camera."""
+"""設定ダイアログ — PLCトリガーカメラのタブ形式設定UI。"""
 
 from __future__ import annotations
 
@@ -23,19 +23,26 @@ if TYPE_CHECKING:
 
 
 class SettingsDialog(tk.Toplevel):
-    """Modal settings dialog with tabbed layout.
+    """タブ形式のモーダル設定ダイアログ。
 
-    After the user presses OK, ``self.result`` contains the updated
-    :class:`~config.AppConfig`; on Cancel it is ``None``.
+    OKボタン押下後は ``self.result`` に更新済みの
+    :class:`~config.AppConfig` が格納される。
+    キャンセル時は ``None``。
     """
 
     def __init__(self, parent: tk.Misc, cfg: AppConfig) -> None:
+        """設定ダイアログを初期化する。
+
+        Args:
+            parent: 親ウィジェット。
+            cfg: 現在の設定値。
+        """
         super().__init__(parent)
         self.title("Settings")
         self.resizable(False, False)
         self.result: AppConfig | None = None
 
-        # Working copies
+        # 作業用コピー
         self._cfg = cfg
         self._devices: list[DeviceConfig] = [
             DeviceConfig(d.address, d.label, d.enabled) for d in cfg.plc.devices
@@ -50,10 +57,11 @@ class SettingsDialog(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self._on_cancel)
 
     # ------------------------------------------------------------------
-    # UI construction
+    # UI構築
     # ------------------------------------------------------------------
 
     def _build_ui(self) -> None:
+        """ノートブックと各タブ、ボタン行を生成する。"""
         nb = ttk.Notebook(self)
         nb.pack(fill="both", expand=True, padx=8, pady=8)
 
@@ -69,7 +77,7 @@ class SettingsDialog(tk.Toplevel):
         nb.add(self._tab_save, text="Save")
         nb.add(self._tab_options, text="Options")
 
-        # Bottom buttons
+        # ボタン行
         btn_frame = ttk.Frame(self)
         btn_frame.pack(fill="x", padx=8, pady=(0, 8))
         ttk.Button(btn_frame, text="OK", command=self._on_ok, width=10).pack(
@@ -79,9 +87,17 @@ class SettingsDialog(tk.Toplevel):
             side="right"
         )
 
-    # ---- PLC tab ---------------------------------------------------------
+    # ---- PLCタブ ---------------------------------------------------------
 
     def _build_tab_plc(self, parent: ttk.Notebook) -> ttk.Frame:
+        """PLCタブのウィジェットを構築する。
+
+        Args:
+            parent: 追加先の Notebook。
+
+        Returns:
+            構築したタブフレーム。
+        """
         f = ttk.Frame(parent, padding=12)
 
         self._plc_ip = self._labeled_entry(f, "IP Address:", 0)
@@ -101,9 +117,17 @@ class SettingsDialog(tk.Toplevel):
 
         return f
 
-    # ---- Devices tab -----------------------------------------------------
+    # ---- デバイスタブ -----------------------------------------------------
 
     def _build_tab_devices(self, parent: ttk.Notebook) -> ttk.Frame:
+        """デバイスタブのウィジェットを構築する。
+
+        Args:
+            parent: 追加先の Notebook。
+
+        Returns:
+            構築したタブフレーム。
+        """
         f = ttk.Frame(parent, padding=12)
 
         cols = ("address", "label", "enabled")
@@ -132,9 +156,17 @@ class SettingsDialog(tk.Toplevel):
         f.columnconfigure(0, weight=1)
         return f
 
-    # ---- Camera tab ------------------------------------------------------
+    # ---- カメラタブ ------------------------------------------------------
 
     def _build_tab_camera(self, parent: ttk.Notebook) -> ttk.Frame:
+        """カメラタブのウィジェットを構築する。
+
+        Args:
+            parent: 追加先の Notebook。
+
+        Returns:
+            構築したタブフレーム。
+        """
         f = ttk.Frame(parent, padding=12)
 
         self._cam_index = self._labeled_entry(f, "Camera Index:", 0)
@@ -163,9 +195,17 @@ class SettingsDialog(tk.Toplevel):
 
         return f
 
-    # ---- Save tab --------------------------------------------------------
+    # ---- 保存タブ --------------------------------------------------------
 
     def _build_tab_save(self, parent: ttk.Notebook) -> ttk.Frame:
+        """保存タブのウィジェットを構築する。
+
+        Args:
+            parent: 追加先の Notebook。
+
+        Returns:
+            構築したタブフレーム。
+        """
         f = ttk.Frame(parent, padding=12)
 
         ttk.Label(f, text="Save Folder:").grid(row=0, column=0, sticky="w", pady=3)
@@ -202,9 +242,17 @@ class SettingsDialog(tk.Toplevel):
 
         return f
 
-    # ---- Options tab -----------------------------------------------------
+    # ---- オプションタブ -----------------------------------------------------
 
     def _build_tab_options(self, parent: ttk.Notebook) -> ttk.Frame:
+        """オプションタブのウィジェットを構築する。
+
+        Args:
+            parent: 追加先の Notebook。
+
+        Returns:
+            構築したタブフレーム。
+        """
         f = ttk.Frame(parent, padding=12)
 
         self._daily_folder = tk.BooleanVar()
@@ -222,11 +270,16 @@ class SettingsDialog(tk.Toplevel):
         return f
 
     # ------------------------------------------------------------------
-    # Populate from config
+    # 設定値を各ウィジェットへ反映
     # ------------------------------------------------------------------
 
     def _populate(self, cfg: AppConfig) -> None:
-        # PLC
+        """設定値を各ウィジェットへ反映する。
+
+        Args:
+            cfg: 反映する設定値。
+        """
+        # PLC設定
         self._plc_ip.delete(0, "end")
         self._plc_ip.insert(0, cfg.plc.ip)
         self._plc_port.delete(0, "end")
@@ -236,10 +289,10 @@ class SettingsDialog(tk.Toplevel):
         self._plc_poll.delete(0, "end")
         self._plc_poll.insert(0, str(cfg.plc.poll_interval_ms))
 
-        # Devices
+        # デバイス設定
         self._refresh_device_tree()
 
-        # Camera
+        # カメラ設定
         self._cam_index.delete(0, "end")
         self._cam_index.insert(0, str(cfg.camera.index))
         self._cap_w.delete(0, "end")
@@ -251,22 +304,23 @@ class SettingsDialog(tk.Toplevel):
         self._prev_h.delete(0, "end")
         self._prev_h.insert(0, str(cfg.camera.preview_height))
 
-        # Save
+        # 保存設定
         self._save_path.delete(0, "end")
         self._save_path.insert(0, cfg.save.save_path)
         self._png_compression.set(cfg.save.png_compression)
         self._filename_fmt.delete(0, "end")
         self._filename_fmt.insert(0, cfg.save.filename_format)
 
-        # Options
+        # オプション設定
         self._daily_folder.set(cfg.save.daily_folder)
         self._device_subfolder.set(cfg.save.device_subfolder)
 
     # ------------------------------------------------------------------
-    # Device list management
+    # デバイスリスト操作
     # ------------------------------------------------------------------
 
     def _refresh_device_tree(self) -> None:
+        """デバイスツリーを ``self._devices`` の内容で再描画する。"""
         for item in self._dev_tree.get_children():
             self._dev_tree.delete(item)
         for dev in self._devices:
@@ -277,12 +331,14 @@ class SettingsDialog(tk.Toplevel):
             )
 
     def _dev_add(self) -> None:
+        """デバイス追加ダイアログを開き、結果をリストへ追記する。"""
         dlg = _DeviceEditDialog(self, DeviceConfig())
         if dlg.result:
             self._devices.append(dlg.result)
             self._refresh_device_tree()
 
     def _dev_edit(self) -> None:
+        """選択中のデバイスを編集ダイアログで更新する。"""
         sel = self._dev_tree.selection()
         if not sel:
             return
@@ -293,6 +349,7 @@ class SettingsDialog(tk.Toplevel):
             self._refresh_device_tree()
 
     def _dev_delete(self) -> None:
+        """選択中のデバイスをリストから削除する。"""
         sel = self._dev_tree.selection()
         if not sel:
             return
@@ -301,6 +358,7 @@ class SettingsDialog(tk.Toplevel):
         self._refresh_device_tree()
 
     def _dev_toggle(self) -> None:
+        """選択中のデバイスの有効／無効を切り替える。"""
         sel = self._dev_tree.selection()
         if not sel:
             return
@@ -309,10 +367,11 @@ class SettingsDialog(tk.Toplevel):
         self._refresh_device_tree()
 
     # ------------------------------------------------------------------
-    # Browse helpers
+    # フォルダ参照
     # ------------------------------------------------------------------
 
     def _browse_save_path(self) -> None:
+        """フォルダ選択ダイアログを開き、保存先パスを更新する。"""
         initial = self._save_path.get() or str(Path.home())
         folder = filedialog.askdirectory(
             parent=self, initialdir=initial, title="Select save folder"
@@ -322,10 +381,16 @@ class SettingsDialog(tk.Toplevel):
             self._save_path.insert(0, folder)
 
     # ------------------------------------------------------------------
-    # OK / Cancel
+    # OK / キャンセル
     # ------------------------------------------------------------------
 
     def _on_ok(self) -> None:
+        """入力値を検証して AppConfig を生成し、ダイアログを閉じる。
+
+        Raises:
+            ValueError: IPアドレス・ポート番号などの入力値が不正な場合。
+                エラーはキャッチされメッセージボックスで通知される。
+        """
         try:
             ip_str = self._plc_ip.get().strip()
             try:
@@ -367,15 +432,26 @@ class SettingsDialog(tk.Toplevel):
         self.destroy()
 
     def _on_cancel(self) -> None:
+        """変更を破棄してダイアログを閉じる。"""
         self.result = None
         self.destroy()
 
     # ------------------------------------------------------------------
-    # Utility
+    # ユーティリティ
     # ------------------------------------------------------------------
 
     @staticmethod
     def _labeled_entry(parent: ttk.Frame, label: str, row: int) -> ttk.Entry:
+        """ラベルとエントリをグリッドに配置して返す。
+
+        Args:
+            parent: 配置先のフレーム。
+            label: ラベルテキスト。
+            row: グリッド行番号。
+
+        Returns:
+            生成した Entry ウィジェット。
+        """
         ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w", pady=3)
         entry = ttk.Entry(parent, width=22)
         entry.grid(row=row, column=1, sticky="w", pady=3)
@@ -383,12 +459,24 @@ class SettingsDialog(tk.Toplevel):
 
 
 # ---------------------------------------------------------------------------
-# Device add/edit sub-dialog
+# デバイス追加/編集サブダイアログ
 # ---------------------------------------------------------------------------
 
 
 class _DeviceEditDialog(tk.Toplevel):
+    """デバイスの追加／編集を行うサブダイアログ。
+
+    OKボタン押下後は ``self.result`` に :class:`~config.DeviceConfig` が格納される。
+    キャンセル時は ``None``。
+    """
+
     def __init__(self, parent: tk.Misc, dev: DeviceConfig) -> None:
+        """デバイス編集ダイアログを初期化する。
+
+        Args:
+            parent: 親ウィジェット。
+            dev: 編集対象のデバイス設定。新規追加時はデフォルト値を渡す。
+        """
         super().__init__(parent)
         self.title("Edit Device")
         self.resizable(False, False)
@@ -426,6 +514,7 @@ class _DeviceEditDialog(tk.Toplevel):
         self.grab_set()
 
     def _on_ok(self) -> None:
+        """入力値を検証して DeviceConfig を生成し、ダイアログを閉じる。"""
         addr = self._address.get().strip()
         lbl = self._label.get().strip()
         if not addr:

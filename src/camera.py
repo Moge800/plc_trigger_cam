@@ -1,4 +1,4 @@
-"""Camera capture thread — continuous preview frames + high-res PNG save."""
+"""カメラキャプチャスレッド — 連続プレビューフレーム取得および高解像度 PNG 保存。"""
 
 from __future__ import annotations
 
@@ -16,47 +16,59 @@ if TYPE_CHECKING:
 
 
 class CameraThread(threading.Thread):
-    """Background thread that continuously grabs frames from a USB camera.
+    """USB カメラから連続的にフレームを取得するバックグラウンドスレッド。
 
-    Usage
-    -----
-    1. Construct and start the thread.
-    2. Call :meth:`get_preview_frame` from the GUI thread to get the latest
-       down-scaled preview frame (numpy BGR array or ``None`` if not ready).
-    3. Call :meth:`capture_hires` to save a full-resolution PNG and get its
-       :class:`~pathlib.Path`.
-    4. Call :meth:`stop` to terminate the thread gracefully.
+    使い方
+    --------
+    1. インスタンスを生成しスレッドを開始する。
+    2. GUI スレッドから :meth:`get_preview_frame` を呼び出して最新の
+       縮小プレビューフレーム（numpy BGR 配列または ``None``）を取得する。
+    3. :meth:`capture_hires` を呼び出してフル解像度 PNG を保存し、
+       :class:`~pathlib.Path` を取得する。
+    4. :meth:`stop` を呼び出してスレッドを安全に停止する。
     """
 
     def __init__(self, cfg: AppConfig) -> None:
+        """カメラスレッドを初期化する。
+
+        Args:
+            cfg: アプリケーション設定。カメラ設定と保存設定を使用する。
+        """
         super().__init__(daemon=True, name="CameraThread")
         self._cam_cfg: CameraConfig = cfg.camera
         self._save_cfg: SaveConfig = cfg.save
         self._stop_event = threading.Event()
 
-        # The latest captured raw frame (at capture resolution or whatever the
-        # camera provides), protected by a lock.
+        # 最新のキャプチャフレーム（カメラが提供する解像度）。ロックで保護。
         self._frame_lock = threading.Lock()
         self._frame: np.ndarray | None = None  # type: ignore[type-arg]
 
-        # Capture lock — prevents concurrent high-res captures
+        # キャプチャロック — 高解像度キャプチャの同時実行を防止
         self._capture_lock = threading.Lock()
 
     # ------------------------------------------------------------------
-    # Public API
+    # 公開API
     # ------------------------------------------------------------------
 
     def stop(self) -> None:
-        """Signal the thread to stop."""
+        """スレッドに停止を指示する。"""
         self._stop_event.set()
 
     def update_config(self, cfg: AppConfig) -> None:
-        """Hot-update camera and save config."""
+        """カメラおよび保存設定をホット更新する。
+
+        Args:
+            cfg: 新しい設定値。
+        """
         self._cam_cfg = cfg.camera
         self._save_cfg = cfg.save
 
     def get_preview_frame(self) -> np.ndarray | None:  # type: ignore[type-arg]
-        """Return the latest preview-sized BGR frame, or ``None``."""
+        """最新のプレビューサイズ BGR フレームを返す。未取得の場合は ``None``。
+
+        Returns:
+            BGR バイト配列、またはフレーム未取得時は ``None``。
+        """
         with self._frame_lock:
             if self._frame is None:
                 return None
@@ -64,9 +76,14 @@ class CameraThread(threading.Thread):
             return cv2.resize(self._frame, (pw, ph), interpolation=cv2.INTER_LINEAR)
 
     def capture_hires(self, device_label: str = "manual") -> Path | None:
-        """Save the current high-res frame to PNG and return the file path.
+        """現在の高解像度フレームを PNG に保存し、ファイルパスを返す。
 
-        Returns ``None`` if no frame is available yet.
+        Args:
+            device_label: ファイル名に使用するデバイスラベル。
+
+        Returns:
+            保存先ファイルの :class:`~pathlib.Path`。
+            フレーム未取得の場合は ``None``。
         """
         with self._capture_lock:
             with self._frame_lock:
@@ -83,10 +100,11 @@ class CameraThread(threading.Thread):
             return save_path
 
     # ------------------------------------------------------------------
-    # Thread entry point
+    # スレッドエントリポイント
     # ------------------------------------------------------------------
 
     def run(self) -> None:
+        """スレッドメインループ。カメラを開き、失敗した場合は再接続する。"""
         while not self._stop_event.is_set():
             cap = self._open_camera()
             if cap is None:
@@ -96,10 +114,15 @@ class CameraThread(threading.Thread):
             cap.release()
 
     # ------------------------------------------------------------------
-    # Internal helpers
+    # 内部ヘルパー
     # ------------------------------------------------------------------
 
     def _open_camera(self) -> cv2.VideoCapture | None:
+        """カメラを開きキャプチャ解像度を設定する。
+
+        Returns:
+            成功時は :class:`cv2.VideoCapture`、失敗時は ``None``。
+        """
         cap = cv2.VideoCapture(self._cam_cfg.index, cv2.CAP_ANY)
         if not cap.isOpened():
             return None
@@ -108,6 +131,11 @@ class CameraThread(threading.Thread):
         return cap
 
     def _capture_loop(self, cap: cv2.VideoCapture) -> None:
+        """カメラからフレームを連続取得し ``self._frame`` を更新する。
+
+        Args:
+            cap: 開放済みの :class:`cv2.VideoCapture` インスタンス。
+        """
         while not self._stop_event.is_set():
             ok, frame = cap.read()
             if not ok:
@@ -117,6 +145,14 @@ class CameraThread(threading.Thread):
                 self._frame = frame
 
     def _build_save_path(self, device_label: str) -> Path:
+        """デバイスラベルと現在時刻から保存先パスを構築する。
+
+        Args:
+            device_label: ファイル名に埋め込むデバイスラベル。
+
+        Returns:
+            PNG 保存先の :class:`~pathlib.Path`。
+        """
         now = datetime.now()
         ms = now.microsecond // 1000
         safe_label = "".join(
