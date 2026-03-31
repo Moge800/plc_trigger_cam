@@ -27,6 +27,7 @@ PLCの指定ビットがON（立ち上がりエッジ）になったとき、USB
 | シミュレーションモード | PLC未接続でも動作確認が可能（Debug メニューから有効化） |
 | 日付フォルダ | 日ごとに `YYYY-MM-DD/` サブフォルダを作成（オプション） |
 | デバイスサブフォルダ | デバイスラベルごとにサブフォルダを作成（オプション） |
+| ビープ音 | キャプチャ成功時に OK 音、失敗時に NG 音（[beep-lite](https://pypi.org/project/beep-lite/) インストール時のみ） |
 
 ---
 
@@ -52,6 +53,19 @@ cd plc_trigger_cam
 ```
 
 初回実行時に `uv sync` で仮想環境と依存パッケージが自動作成されます。
+
+> **ビープ音を有効にする場合（オプション）**
+> ```powershell
+> uv sync --extra audio
+> ```
+> インストールしない場合は音なしで通常動作します。
+
+> **ビープ音を有効にする場合（オプション）**
+> ```powershell
+> uv sync --extra audio
+> ```
+> [beep-lite](https://pypi.org/project/beep-lite/) がインストールされると、キャプチャ成功時に OK 音、フレーム未取得時に NG 音が鳴ります。  
+> インストールしない場合は音なしで通常動作します。
 
 ### Linux / Raspberry Pi
 
@@ -145,6 +159,9 @@ PLC が手元にない場合でも動作確認ができます。
 ```powershell
 # 依存パッケージのインストール（dev含む）
 uv sync
+
+# ビープ音機能を有効にする場合（オプション）
+uv sync --extra audio
 
 # Lint チェック
 uv run ruff check src/
