@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import threading
 import time
 from datetime import datetime
@@ -120,10 +121,14 @@ class CameraThread(threading.Thread):
     def _open_camera(self) -> cv2.VideoCapture | None:
         """カメラを開きキャプチャ解像度を設定する。
 
+        Windows では MSMF より起動が速い DirectShow (CAP_DSHOW) を優先する。
+
         Returns:
             成功時は :class:`cv2.VideoCapture`、失敗時は ``None``。
         """
-        cap = cv2.VideoCapture(self._cam_cfg.index, cv2.CAP_ANY)
+        # Windows では CAP_DSHOW を使うと MSMF より起動が大幅に速い
+        backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
+        cap = cv2.VideoCapture(self._cam_cfg.index, backend)
         if not cap.isOpened():
             return None
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self._cam_cfg.capture_width)
