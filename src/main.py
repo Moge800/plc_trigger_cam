@@ -102,6 +102,8 @@ class App(tk.Tk):
         self._build_ui()
         self._apply_config_to_ui()
         self._start_camera()
+        if _beep is not None and self._cfg.save.beep_on_trigger:
+            _beep.preload_all()
         self._schedule_refresh()
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -373,11 +375,11 @@ class App(tk.Tk):
         if path:
             self._log_capture(path, device_label)
             self._last_capture_label.config(text=str(path))
-            if _beep:
+            if _beep is not None and self._cfg.save.beep_on_trigger:
                 _beep.ok()
         else:
             self._set_status("Capture failed: no frame available.")
-            if _beep:
+            if _beep is not None and self._cfg.save.beep_on_trigger:
                 _beep.ng()
 
     def _log_capture(self, path: Path, device_label: str) -> None:
@@ -419,6 +421,8 @@ class App(tk.Tk):
             save_config(self._cfg)
             self._apply_config_to_ui()
             self._start_camera()
+            if _beep is not None and self._cfg.save.beep_on_trigger:
+                _beep.preload_all()
             self._set_status("Settings saved.")
 
         if running:
@@ -429,7 +433,7 @@ class App(tk.Tk):
     # ------------------------------------------------------------------
 
     def _process_plc_events(self) -> None:
-        """イベントキューに溜まった全イベントを处理する。"""
+        """イベントキューに溜まった全イベントを処理する。"""
         try:
             while True:
                 event = _GUI_EVENT_QUEUE.get_nowait()

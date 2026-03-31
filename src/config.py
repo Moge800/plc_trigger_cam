@@ -85,6 +85,7 @@ class SaveConfig:
         filename_format: ファイル名フォーマット（strftime + {ms}, {device}）。
         daily_folder: ``True`` の場合は YYYY-MM-DD サブフォルダを作成。
         device_subfolder: ``True`` の場合はデバイスラベルごとのサブフォルダを作成。
+        beep_on_trigger: ``True`` の場合はトリガー時に通知音を再生する（beep-lite 必須）。
     """
 
     save_path: str = str(Path.home() / "Pictures" / "plc_trigger_cam")
@@ -92,6 +93,7 @@ class SaveConfig:
     filename_format: str = "%Y%m%d_%H%M%S_{ms:03d}_{device}"
     daily_folder: bool = True  # YYYY-MM-DD サブフォルダを作成
     device_subfolder: bool = False  # デバイスラベルごとのサブフォルダを作成
+    beep_on_trigger: bool = False  # トリガー時に通知音を再生
 
 
 # ---------------------------------------------------------------------------

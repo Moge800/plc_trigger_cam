@@ -267,6 +267,13 @@ class SettingsDialog(tk.Toplevel):
             variable=self._device_subfolder,
         ).grid(row=1, column=0, sticky="w", pady=4)
 
+        self._beep_on_trigger = tk.BooleanVar()
+        ttk.Checkbutton(
+            f,
+            text="Beep on trigger  (要 beep-lite: uv sync --extra audio)",
+            variable=self._beep_on_trigger,
+        ).grid(row=2, column=0, sticky="w", pady=4)
+
         return f
 
     # ------------------------------------------------------------------
@@ -314,6 +321,7 @@ class SettingsDialog(tk.Toplevel):
         # オプション設定
         self._daily_folder.set(cfg.save.daily_folder)
         self._device_subfolder.set(cfg.save.device_subfolder)
+        self._beep_on_trigger.set(cfg.save.beep_on_trigger)
 
     # ------------------------------------------------------------------
     # デバイスリスト操作
@@ -423,6 +431,7 @@ class SettingsDialog(tk.Toplevel):
                 filename_format=self._filename_fmt.get().strip(),
                 daily_folder=self._daily_folder.get(),
                 device_subfolder=self._device_subfolder.get(),
+                beep_on_trigger=self._beep_on_trigger.get(),
             )
         except ValueError as exc:
             messagebox.showerror("Invalid input", str(exc), parent=self)

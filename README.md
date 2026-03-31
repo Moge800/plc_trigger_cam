@@ -58,12 +58,6 @@ cd plc_trigger_cam
 > ```powershell
 > uv sync --extra audio
 > ```
-> インストールしない場合は音なしで通常動作します。
-
-> **ビープ音を有効にする場合（オプション）**
-> ```powershell
-> uv sync --extra audio
-> ```
 > [beep-lite](https://pypi.org/project/beep-lite/) がインストールされると、キャプチャ成功時に OK 音、フレーム未取得時に NG 音が鳴ります。  
 > インストールしない場合は音なしで通常動作します。
 
@@ -109,7 +103,7 @@ chmod +x run.sh
 |---|---|
 | Camera | カメラインデックス・キャプチャ解像度・プレビュー解像度 |
 | Save | 保存先フォルダ・PNG圧縮レベル（0=高速/大 〜 9=低速/小）・ファイル名形式 |
-| Options | 日付フォルダ（YYYY-MM-DD）・デバイスサブフォルダ |
+| Options | 日付フォルダ（YYYY-MM-DD）・デバイスサブフォルダ・トリガー通知音 |
 
 ### 4. PLC に接続して監視開始
 
